@@ -10,7 +10,7 @@ const modes: { key: ViewMode; label: string; icon: string }[] = [
 ];
 
 export default function TopBar() {
-  const { viewMode, setViewMode } = useBrainStore();
+  const { viewMode, setViewMode, startQuiz, startFlashcards, selectedChapter } = useBrainStore();
 
   return (
     <header
@@ -46,7 +46,15 @@ export default function TopBar() {
           return (
             <button
               key={mode.key}
-              onClick={() => setViewMode(mode.key)}
+              onClick={() => {
+                if (mode.key === 'quiz') {
+                  startQuiz(selectedChapter ?? undefined);
+                } else if (mode.key === 'flashcards') {
+                  startFlashcards(selectedChapter ?? undefined);
+                } else {
+                  setViewMode(mode.key);
+                }
+              }}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
               style={{
                 background: isActive ? 'var(--color-accent)' : 'transparent',
