@@ -145,26 +145,64 @@ export const useBrainStore = create<BrainStoreState>()(
         const shuffled = [...sourceCards].sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, Math.min(20, shuffled.length));
 
+        // Question type generators
+        const questionTypes = [
+          // Type 1: Term -> pick correct Definition
+          (card: typeof sourceCards[0], wrongs: typeof sourceCards) => ({
+            question: `What is "${card.term}"?`,
+            options: [card.definition, ...wrongs.map((c) => c.definition)].sort(() => Math.random() - 0.5),
+            findCorrect: (opts: string[]) => opts.indexOf(card.definition),
+            explanation: `${card.term}: ${card.definition}`,
+          }),
+          // Type 2: Definition -> pick correct Term
+          (card: typeof sourceCards[0], wrongs: typeof sourceCards) => ({
+            question: `Which term matches this definition?\n"${card.definition}"`,
+            options: [card.term, ...wrongs.map((c) => c.term)].sort(() => Math.random() - 0.5),
+            findCorrect: (opts: string[]) => opts.indexOf(card.term),
+            explanation: `The answer is: ${card.term}`,
+          }),
+          // Type 3: True/False style - is this definition correct for this term?
+          (card: typeof sourceCards[0], wrongs: typeof sourceCards) => {
+            const isTrue = Math.random() > 0.5;
+            const shownDef = isTrue ? card.definition : wrongs[0].definition;
+            return {
+              question: `True or False: "${card.term}" is defined as:\n"${shownDef}"`,
+              options: ['True', 'False'],
+              findCorrect: (opts: string[]) => opts.indexOf(isTrue ? 'True' : 'False'),
+              explanation: isTrue
+                ? `Correct! ${card.term}: ${card.definition}`
+                : `False. The correct definition of "${card.term}" is: ${card.definition}`,
+            };
+          },
+          // Type 4: Fill the blank - which term completes the sentence?
+          (card: typeof sourceCards[0], wrongs: typeof sourceCards) => ({
+            question: `Complete: "______" refers to ${card.definition}`,
+            options: [card.term, ...wrongs.map((c) => c.term)].sort(() => Math.random() - 0.5),
+            findCorrect: (opts: string[]) => opts.indexOf(card.term),
+            explanation: `${card.term}: ${card.definition}`,
+          }),
+        ];
+
         const questions = selected.map((card, i) => {
           const wrongCards = sourceCards
             .filter((c) => c.id !== card.id)
             .sort(() => Math.random() - 0.5)
             .slice(0, 3);
 
-          const options = [card.definition, ...wrongCards.map((c) => c.definition)]
-            .sort(() => Math.random() - 0.5);
-
-          const correctIndex = options.indexOf(card.definition);
+          const typeIndex = i % questionTypes.length;
+          const generator = questionTypes[typeIndex];
+          const generated = generator(card, wrongCards);
+          const correctIndex = generated.findCorrect(generated.options);
 
           return {
             id: `q_${i}`,
             type: 'multiple_choice' as const,
-            question: `What is the definition of "${card.term}"?`,
-            options,
+            question: generated.question,
+            options: generated.options,
             correctIndex,
-            explanation: card.definition,
+            explanation: generated.explanation,
             chapter: card.chapter,
-            difficulty: 'basic' as const,
+            difficulty: (['basic', 'intermediate', 'advanced'] as const)[Math.min(typeIndex, 2)],
           };
         });
 
