@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type {
   ViewMode, LesionState, CognitiveDomain,
-  HoverInfo, ChapterData, QuizSession, FlashcardSession, Flashcard
+  HoverInfo, ChapterData, QuizSession, FlashcardSession, Flashcard, QuizResult
 } from '../types/brain.types';
 import { chapters } from '../data/flashcardData';
 import { brainRegions } from '../data/brainRegions';
@@ -32,6 +32,7 @@ interface BrainStoreState {
   chapters: ChapterData[];
 
   quizSession: QuizSession | null;
+  quizHistory: QuizResult[];
   startQuiz: (chapter?: number) => void;
   answerQuiz: (answerIndex: number) => void;
   nextQuestion: () => void;
@@ -135,6 +136,14 @@ export const useBrainStore = create<BrainStoreState>()(
       chapters: chapters,
 
       quizSession: null,
+      quizHistory: (() => {
+        try {
+          const saved = localStorage.getItem('quizHistory');
+          return saved ? JSON.parse(saved) as QuizResult[] : [];
+        } catch {
+          return [];
+        }
+      })(),
       startQuiz: (chapter) => {
         const sourceCards = chapter
           ? chapters.find((c) => c.chapter === chapter)?.cards ?? []
@@ -247,12 +256,21 @@ export const useBrainStore = create<BrainStoreState>()(
 
       endQuiz: () => {
         const session = get().quizSession;
-        if (session) {
-          set({
-            quizSession: { ...session, completedAt: Date.now() },
-            viewMode: 'explore',
-          });
+        if (!session) return;
+        const completedAt = Date.now();
+        const allAnswered = session.answers.every((a) => a !== null);
+        if (allAnswered) {
+          const result: QuizResult = {
+            chapter: session.chapter,
+            score: session.score,
+            total: session.questions.length,
+            completedAt,
+          };
+          const updated = [result, ...get().quizHistory].slice(0, 20);
+          try { localStorage.setItem('quizHistory', JSON.stringify(updated)); } catch { /* noop */ }
+          set({ quizHistory: updated });
         }
+        set({ quizSession: { ...session, completedAt }, viewMode: 'explore' });
       },
 
       flashcardSession: null,

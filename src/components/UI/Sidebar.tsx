@@ -11,6 +11,7 @@ export default function Sidebar() {
     toggleAutoRotate,
     startQuiz,
     startFlashcards,
+    quizHistory,
   } = useBrainStore();
 
   return (
@@ -112,6 +113,41 @@ export default function Sidebar() {
             </svg>
             Flashcards
           </button>
+        </div>
+      )}
+
+      {/* Quiz History */}
+      {quizHistory.length > 0 && (
+        <div
+          className="shrink-0 px-3 py-2.5 flex flex-col gap-1.5"
+          style={{ borderTop: '1px solid var(--glass-border)' }}
+        >
+          <h3 className="text-xs font-semibold uppercase tracking-wider px-1 mb-0.5" style={{ color: 'var(--color-text-muted)' }}>
+            Recent Quizzes
+          </h3>
+          {quizHistory.slice(0, 5).map((r, i) => {
+            const pct = Math.round((r.score / r.total) * 100);
+            const color = pct >= 70 ? '#34d399' : pct >= 40 ? '#fbbf24' : '#f87171';
+            const ch = r.chapter ? chapters.find((c) => c.chapter === r.chapter) : null;
+            const date = new Date(r.completedAt).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' });
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-between px-2 py-1.5 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.03)' }}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-sm shrink-0">{ch ? ch.icon : '📚'}</span>
+                  <span className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                    {ch ? `פרק ${r.chapter}` : 'כל הפרקים'} · {date}
+                  </span>
+                </div>
+                <span className="text-xs font-bold shrink-0 ml-2" style={{ color }}>
+                  {pct}%
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
 

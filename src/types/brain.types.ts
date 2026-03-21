@@ -70,6 +70,14 @@ export interface QuizQuestion {
   relatedRegion?: string;
 }
 
+/** Saved result of a completed quiz */
+export interface QuizResult {
+  chapter?: number;
+  score: number;
+  total: number;
+  completedAt: number;
+}
+
 /** User's quiz session state */
 export interface QuizSession {
   questions: QuizQuestion[];

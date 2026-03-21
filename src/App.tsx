@@ -20,7 +20,10 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden" style={{ paddingTop: '56px' }}>
         <Sidebar />
 
-        <div className="flex-1 relative overflow-hidden">
+        <div
+          className="flex-1 relative overflow-hidden"
+          style={{ marginLeft: 292, marginRight: selectedRegionId ? 332 : 0 }}
+        >
           <BrainCanvas />
 
           {viewMode === 'quiz' && quizSession && <QuizPanel />}
