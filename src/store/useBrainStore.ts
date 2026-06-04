@@ -1,12 +1,39 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type {
-  ViewMode, LesionState, CognitiveDomain,
+  ViewMode, LesionState, CognitiveDomain, BrainRegion,
   HoverInfo, ChapterData, QuizSession, FlashcardSession, Flashcard
 } from '../types/brain.types';
 import { chapters } from '../data/flashcardData';
 import { brainRegions } from '../data/brainRegions';
 import { cognitiveDomains } from '../data/cognitiveDomains';
+
+/**
+ * Age-dependent brain plasticity (Kennard principle): younger brains recover a
+ * larger fraction of a lesion-induced deficit than older ones. Returns the
+ * fraction of the deficit that is recovered, in the range 0–1.
+ */
+export function plasticityRecovery(age: number): number {
+  const MAX_RECOVERY = 0.7; // recovery ceiling for a newborn
+  const TAU = 22; // years — controls how fast plasticity declines with age
+  const FLOOR = 0.03; // minimal residual plasticity in late adulthood
+  const recovery = MAX_RECOVERY * Math.exp(-age / TAU);
+  return Math.max(FLOOR, recovery);
+}
+
+/** Compute per-domain deficits for a lesion, attenuated by age-based plasticity. */
+function computeLesionEffects(
+  region: BrainRegion,
+  severity: number,
+  age: number,
+): Record<string, number> {
+  const recovery = plasticityRecovery(age);
+  const effects: Record<string, number> = {};
+  for (const [domain, maxDeficit] of Object.entries(region.lesionEffects)) {
+    effects[domain] = Math.round((severity / 100) * maxDeficit * (1 - recovery));
+  }
+  return effects;
+}
 
 interface BrainStoreState {
   viewMode: ViewMode;
@@ -23,6 +50,9 @@ interface BrainStoreState {
   removeLesion: (regionId: string) => void;
   updateLesionSeverity: (regionId: string, severity: number) => void;
   clearAllLesions: () => void;
+
+  patientAge: number;
+  setPatientAge: (age: number) => void;
 
   domains: CognitiveDomain[];
   recalculateDomains: () => void;
@@ -72,14 +102,11 @@ export const useBrainStore = create<BrainStoreState>()(
 
       activeLesions: [],
       addLesion: (regionId, severity = 50) => {
-        const { activeLesions } = get();
+        const { activeLesions, patientAge } = get();
         if (activeLesions.find((l) => l.regionId === regionId)) return;
         const region = brainRegions.find((r) => r.id === regionId);
         if (!region) return;
-        const effects: Record<string, number> = {};
-        for (const [domain, maxDeficit] of Object.entries(region.lesionEffects)) {
-          effects[domain] = Math.round((severity / 100) * maxDeficit);
-        }
+        const effects = computeLesionEffects(region, severity, patientAge);
         set({
           activeLesions: [...activeLesions, { regionId, severity, effects }],
         });
@@ -96,10 +123,7 @@ export const useBrainStore = create<BrainStoreState>()(
       updateLesionSeverity: (regionId, severity) => {
         const region = brainRegions.find((r) => r.id === regionId);
         if (!region) return;
-        const effects: Record<string, number> = {};
-        for (const [domain, maxDeficit] of Object.entries(region.lesionEffects)) {
-          effects[domain] = Math.round((severity / 100) * maxDeficit);
-        }
+        const effects = computeLesionEffects(region, severity, get().patientAge);
         set({
           activeLesions: get().activeLesions.map((l) =>
             l.regionId === regionId ? { ...l, severity, effects } : l
@@ -110,6 +134,17 @@ export const useBrainStore = create<BrainStoreState>()(
 
       clearAllLesions: () => {
         set({ activeLesions: [] });
+        get().recalculateDomains();
+      },
+
+      patientAge: 30,
+      setPatientAge: (age) => {
+        const updated = get().activeLesions.map((l) => {
+          const region = brainRegions.find((r) => r.id === l.regionId);
+          if (!region) return l;
+          return { ...l, effects: computeLesionEffects(region, l.severity, age) };
+        });
+        set({ patientAge: age, activeLesions: updated });
         get().recalculateDomains();
       },
 

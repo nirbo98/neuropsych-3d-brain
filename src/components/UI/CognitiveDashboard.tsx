@@ -1,4 +1,4 @@
-import { useBrainStore } from '../../store/useBrainStore';
+import { useBrainStore, plasticityRecovery } from '../../store/useBrainStore';
 
 function getBarColor(score: number): string {
   if (score > 70) return 'var(--color-success)';
@@ -6,10 +6,24 @@ function getBarColor(score: number): string {
   return 'var(--color-danger)';
 }
 
+function getPlasticityLabel(age: number): string {
+  if (age <= 5) return 'Very high';
+  if (age <= 12) return 'High';
+  if (age <= 18) return 'Moderate';
+  if (age <= 40) return 'Limited';
+  if (age <= 65) return 'Low';
+  return 'Minimal';
+}
+
 export default function CognitiveDashboard() {
-  const { viewMode, domains, clearAllLesions, activeLesions } = useBrainStore();
+  const {
+    viewMode, domains, clearAllLesions, activeLesions,
+    patientAge, setPatientAge,
+  } = useBrainStore();
 
   if (viewMode !== 'lesion') return null;
+
+  const recoveryPct = Math.round(plasticityRecovery(patientAge) * 100);
 
   return (
     <div
@@ -17,6 +31,40 @@ export default function CognitiveDashboard() {
       style={{ height: 120 }}
     >
       <div className="h-full flex items-center px-4 gap-3">
+        {/* Age & plasticity control */}
+        <div
+          className="shrink-0 flex flex-col gap-1.5 pr-3"
+          style={{ width: 190, borderRight: '1px solid var(--glass-border)' }}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+              Patient Age
+            </span>
+            <span className="text-xs font-mono font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {patientAge} yr
+            </span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={90}
+            value={patientAge}
+            onChange={(e) => setPatientAge(parseInt(e.target.value))}
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, var(--color-success) ${(patientAge / 90) * 100}%, rgba(255,255,255,0.1) ${(patientAge / 90) * 100}%)`,
+            }}
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+              Plasticity: {getPlasticityLabel(patientAge)}
+            </span>
+            <span className="text-[10px] font-mono font-semibold" style={{ color: 'var(--color-success)' }}>
+              −{recoveryPct}% deficit
+            </span>
+          </div>
+        </div>
+
         {/* Domain cards */}
         <div className="flex-1 flex items-center gap-2 overflow-x-auto py-2">
           {domains.map((domain) => {
