@@ -5,6 +5,7 @@ import SearchBar from './SearchBar';
 const modes: { key: ViewMode; label: string; icon: string }[] = [
   { key: 'explore', label: 'Explore', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
   { key: 'lesion', label: 'Lesion', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+  { key: 'hemispheres', label: 'Hemispheres', icon: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 3v18' },
   { key: 'quiz', label: 'Quiz', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { key: 'flashcards', label: 'Flashcards', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
 ];

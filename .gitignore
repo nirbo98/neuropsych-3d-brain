@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Raw lecture source archives (large, regenerable inputs to `npm run lectures`)
+lectures-src/*.pdf
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

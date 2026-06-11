@@ -2,11 +2,12 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type {
   ViewMode, LesionState, CognitiveDomain, BrainRegion,
-  HoverInfo, ChapterData, QuizSession, FlashcardSession, Flashcard
+  HoverInfo, ChapterData, QuizSession, FlashcardSession, Flashcard, Hemisphere
 } from '../types/brain.types';
 import { chapters } from '../data/flashcardData';
 import { brainRegions } from '../data/brainRegions';
 import { cognitiveDomains } from '../data/cognitiveDomains';
+import { hemisphereRegionIds } from '../data/autismData';
 
 /**
  * Age-dependent brain plasticity (Kennard principle): younger brains recover a
@@ -44,6 +45,19 @@ interface BrainStoreState {
   hoverInfo: HoverInfo | null;
   selectRegion: (id: string | null) => void;
   setHoveredRegion: (id: string | null, info?: HoverInfo) => void;
+
+  // Hemisphere / autism lens
+  selectedHemisphere: Hemisphere | null;
+  selectHemisphere: (h: Hemisphere | null) => void;
+  highlightedRegionIds: string[];
+  setHighlightedRegions: (ids: string[]) => void;
+
+  // Lesion-mode "predict the deficit" guess flow
+  guessDomains: string[];
+  guessRevealed: boolean;
+  toggleGuessDomain: (domainId: string) => void;
+  revealGuess: () => void;
+  resetGuess: () => void;
 
   activeLesions: LesionState[];
   addLesion: (regionId: string, severity?: number) => void;
@@ -89,16 +103,46 @@ export const useBrainStore = create<BrainStoreState>()(
   devtools(
     (set, get) => ({
       viewMode: 'explore',
-      setViewMode: (mode) => set({ viewMode: mode }),
+      setViewMode: (mode) => set({
+        viewMode: mode,
+        guessDomains: [],
+        guessRevealed: false,
+        selectedHemisphere: null,
+        highlightedRegionIds: [],
+      }),
 
       selectedRegionId: null,
       hoveredRegionId: null,
       hoverInfo: null,
-      selectRegion: (id) => set({ selectedRegionId: id }),
+      // Reset the guess flow whenever a different region is selected.
+      selectRegion: (id) => set({ selectedRegionId: id, guessDomains: [], guessRevealed: false }),
       setHoveredRegion: (id, info) => set({
         hoveredRegionId: id,
         hoverInfo: info ?? null,
       }),
+
+      selectedHemisphere: null,
+      // Selecting a hemisphere pulses all of its autism-relevant regions at once.
+      selectHemisphere: (h) => set({
+        selectedHemisphere: h,
+        highlightedRegionIds: h ? hemisphereRegionIds(h) : [],
+      }),
+      highlightedRegionIds: [],
+      setHighlightedRegions: (ids) => set({ highlightedRegionIds: ids }),
+
+      guessDomains: [],
+      guessRevealed: false,
+      toggleGuessDomain: (domainId) => {
+        const { guessDomains, guessRevealed } = get();
+        if (guessRevealed) return; // locked once revealed
+        set({
+          guessDomains: guessDomains.includes(domainId)
+            ? guessDomains.filter((d) => d !== domainId)
+            : [...guessDomains, domainId],
+        });
+      },
+      revealGuess: () => set({ guessRevealed: true }),
+      resetGuess: () => set({ guessDomains: [], guessRevealed: false }),
 
       activeLesions: [],
       addLesion: (regionId, severity = 50) => {

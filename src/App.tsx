@@ -2,6 +2,7 @@ import BrainCanvas from './components/Brain3D/BrainCanvas';
 import TopBar from './components/UI/TopBar';
 import Sidebar from './components/UI/Sidebar';
 import RegionInfoPanel from './components/UI/RegionInfoPanel';
+import HemispherePanel from './components/UI/HemispherePanel';
 import CognitiveDashboard from './components/UI/CognitiveDashboard';
 import QuizPanel from './components/Quiz/QuizPanel';
 import FlashcardPanel from './components/Flashcards/FlashcardPanel';
@@ -27,7 +28,8 @@ export default function App() {
           {viewMode === 'flashcards' && flashcardSession && <FlashcardPanel />}
         </div>
 
-        {selectedRegionId && <RegionInfoPanel />}
+        {selectedRegionId && viewMode !== 'hemispheres' && <RegionInfoPanel />}
+        {viewMode === 'hemispheres' && <HemispherePanel />}
       </div>
 
       {viewMode === 'lesion' && <CognitiveDashboard />}

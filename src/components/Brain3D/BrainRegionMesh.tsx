@@ -16,8 +16,10 @@ export default function BrainRegionMesh({ region }: BrainRegionMeshProps) {
   const activeLesions = useBrainStore((s) => s.activeLesions);
   const selectRegion = useBrainStore((s) => s.selectRegion);
   const setHoveredRegion = useBrainStore((s) => s.setHoveredRegion);
+  const highlightedRegionIds = useBrainStore((s) => s.highlightedRegionIds);
 
   const isSelected = selectedRegionId === region.id;
+  const isHighlighted = highlightedRegionIds.includes(region.id);
   const lesion = activeLesions.find((l) => l.regionId === region.id);
   const hasLesion = !!lesion;
 
@@ -64,6 +66,11 @@ export default function BrainRegionMesh({ region }: BrainRegionMeshProps) {
       const pulse = (Math.sin(clock.elapsedTime * 3) + 1) / 2;
       mat.emissive.set('#ff0000');
       mat.emissiveIntensity = 0.3 + pulse * 0.5;
+    } else if (isHighlighted) {
+      // "Live example" demonstration glow (hemisphere / autism lens)
+      const pulse = (Math.sin(clock.elapsedTime * 4) + 1) / 2;
+      mat.emissive.set('#22d3ee');
+      mat.emissiveIntensity = 0.4 + pulse * 0.6;
     } else if (isSelected) {
       mat.emissive.copy(baseColor);
       mat.emissiveIntensity = 0.4;
@@ -72,7 +79,7 @@ export default function BrainRegionMesh({ region }: BrainRegionMeshProps) {
       mat.emissiveIntensity = 0;
     }
 
-    const targetScale = hovered ? 1.08 : 1;
+    const targetScale = hovered ? 1.08 : isHighlighted ? 1.14 : 1;
     meshRef.current.scale.lerp(
       new THREE.Vector3(
         region.scale[0] * targetScale,

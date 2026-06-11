@@ -51,11 +51,38 @@ export interface CognitiveDomain {
   description: string;
 }
 
+// ── Lecture Content Types ───────────────────────────────────
+
+/** A single lecture slide extracted from the lecturer's decks */
+export interface LectureSlide {
+  id: string;
+  index: number;
+  text: string;
+  wordCount: number;
+  isImageDominant: boolean;
+  /** Brain region this slide is mapped to (from lectures.annotations.json) */
+  regionId?: string;
+  /** Cognitive domains the slide highlights, for guess feedback */
+  deficitFocus?: string[];
+  /** Relative path under public/, e.g. "lectures/<lectureId>/<slideId>.jpeg" */
+  image?: string;
+}
+
+/** One lecture deck and its ordered slides */
+export interface Lecture {
+  id: string;
+  title: string;
+  slides: LectureSlide[];
+}
+
 // ── UI State Types ──────────────────────────────────────────
 
-export type ViewMode = 'explore' | 'lesion' | 'quiz' | 'flashcards';
+export type ViewMode = 'explore' | 'lesion' | 'hemispheres' | 'quiz' | 'flashcards';
 
 export type PanelPosition = 'left' | 'right' | 'bottom' | 'hidden';
+
+/** Cerebral hemisphere, used by the hemisphere/autism lens */
+export type Hemisphere = 'left' | 'right';
 
 /** Quiz question generated from flashcard data */
 export interface QuizQuestion {
