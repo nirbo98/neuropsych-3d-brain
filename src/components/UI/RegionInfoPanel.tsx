@@ -49,8 +49,8 @@ export default function RegionInfoPanel() {
 
   return (
     <div
-      className="fixed right-3 top-[68px] bottom-3 z-40 flex flex-col glass-panel overflow-hidden animate-slide-up"
-      style={{ width: 320 }}
+      className="fixed right-3 top-[68px] z-40 flex flex-col glass-panel overflow-hidden animate-slide-up"
+      style={{ width: 320, bottom: viewMode === 'lesion' ? 144 : 12 }}
     >
       {/* Header */}
       <div className="shrink-0 px-4 pt-4 pb-3 flex items-start justify-between gap-3"
